@@ -1,30 +1,28 @@
 /******************************************************************************
 * File Name:   main.c
 *
-* Description: This is the source code for the PSoC 6 MCU: Hello World Example
+* Description: This is the source code for the PSoC 6 MCU Hello World Example
 *              for ModusToolbox.
 *
-* Related Document: See README.md
-*
+* Related Document: See Readme.md
 *
 *******************************************************************************
-* Copyright 2019-2021, Cypress Semiconductor Corporation (an Infineon company) or
-* an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
+* (c) 2019, Cypress Semiconductor Corporation. All rights reserved.
+*******************************************************************************
+* This software, including source code, documentation and related materials
+* ("Software"), is owned by Cypress Semiconductor Corporation or one of its
+* subsidiaries ("Cypress") and is protected by and subject to worldwide patent
+* protection (United States and foreign), United States copyright laws and
+* international treaty provisions. Therefore, you may use this Software only
+* as provided in the license agreement accompanying the software package from
+* which you obtained this Software ("EULA").
 *
-* This software, including source code, documentation and related
-* materials ("Software") is owned by Cypress Semiconductor Corporation
-* or one of its affiliates ("Cypress") and is protected by and subject to
-* worldwide patent protection (United States and foreign),
-* United States copyright laws and international treaty provisions.
-* Therefore, you may use this Software only as provided in the license
-* agreement accompanying the software package from which you
-* obtained this Software ("EULA").
 * If no EULA applies, Cypress hereby grants you a personal, non-exclusive,
-* non-transferable license to copy, modify, and compile the Software
-* source code solely for use in connection with Cypress's
-* integrated circuit products.  Any reproduction, modification, translation,
-* compilation, or representation of this Software except as specified
-* above is prohibited without the express written permission of Cypress.
+* non-transferable license to copy, modify, and compile the Software source
+* code solely for use in connection with Cypress's integrated circuit products.
+* Any reproduction, modification, translation, compilation, or representation
+* of this Software except as specified above is prohibited without the express
+* written permission of Cypress.
 *
 * Disclaimer: THIS SOFTWARE IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND,
 * EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT, IMPLIED
@@ -35,9 +33,9 @@
 * not authorize its products for use in any products where a malfunction or
 * failure of the Cypress product may reasonably be expected to result in
 * significant property damage, injury or death ("High Risk Product"). By
-* including Cypress's product in a High Risk Product, the manufacturer
-* of such system or application assumes all risk of such use and in doing
-* so agrees to indemnify Cypress against all liability.
+* including Cypress's product in a High Risk Product, the manufacturer of such
+* system or application assumes all risk of such use and in doing so agrees to
+* indemnify Cypress against all liability.
 *******************************************************************************/
 
 #include "cy_pdl.h"
@@ -69,6 +67,9 @@ static void isr_timer(void *callback_arg, cyhal_timer_event_t event);
 *******************************************************************************/
 bool timer_interrupt_flag = false;
 bool led_blink_active_flag = true;
+
+/* UART HAL object used by Retarget-IO for Debug UART port */
+extern cyhal_uart_t cy_retarget_io_uart_obj;
 
 /* Variable for storing character read from terminal */
 uint8_t uart_read_value;
@@ -111,7 +112,7 @@ int main(void)
     __enable_irq();
 
     /* Initialize retarget-io to use the debug UART port */
-    result = cy_retarget_io_init(CYBSP_DEBUG_UART_TX, CYBSP_DEBUG_UART_RX,
+    result = cy_retarget_io_init(CYBSP_DEBUG_UART_TX, CYBSP_DEBUG_UART_RX, \
                                  CY_RETARGET_IO_BAUDRATE);
 
     /* retarget-io init failed. Stop program execution */
@@ -121,10 +122,11 @@ int main(void)
     }
 
     /* Initialize the User LED */
-    result = cyhal_gpio_init(CYBSP_USER_LED, CYHAL_GPIO_DIR_OUTPUT, 
-                             CYHAL_GPIO_DRIVE_STRONG, CYBSP_LED_STATE_OFF);
+    result = cyhal_gpio_init((cyhal_gpio_t) CYBSP_USER_LED, \
+              CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, \
+              CYBSP_LED_STATE_OFF);
 
-    /* GPIO init failed. Stop program execution */
+    /* gpio init failed. Stop program execution */
     if (result != CY_RSLT_SUCCESS)
     {
         CY_ASSERT(0);
@@ -142,19 +144,22 @@ int main(void)
     printf("For more PSoC 6 MCU projects, "
            "visit our code examples repositories:\r\n\n");
 
-    printf("https://github.com/cypresssemiconductorco/"
-           "Code-Examples-for-ModusToolbox-Software\r\n\n");
+    printf("1. ModusToolbox Examples:\r\n https://github.com/"
+           "cypresssemiconductorco/Code-Examples-for-ModusToolbox"
+           "-Software\r\n\n");
+
+    printf("2. Mbed OS Examples:\r\n https://os.mbed.com/teams/Cypress/\r\n\n");
 
     /* Initialize timer to toggle the LED */
     timer_init();
- 
+
     printf("Press 'Enter' key to pause or "
            "resume blinking the user LED \r\n\r\n");
 
-    for (;;)
+    for(;;)
     {
         /* Check if 'Enter' key was pressed */
-        if (cyhal_uart_getc(&cy_retarget_io_uart_obj, &uart_read_value, 1) 
+        if(cyhal_uart_getc(&cy_retarget_io_uart_obj, &uart_read_value, 1) \
              == CY_RSLT_SUCCESS)
         {
             if (uart_read_value == '\r')
@@ -174,20 +179,20 @@ int main(void)
                 }
 
                 /* Move cursor to previous line */
-                printf("\x1b[1F");
+            	printf("\x1b[1F");
 
                 led_blink_active_flag ^= 1;
             }
         }
 
         /* Check if timer elapsed (interrupt fired) and toggle the LED */
-        if (timer_interrupt_flag)
+        if(timer_interrupt_flag)
         {
             /* Clear the flag */
             timer_interrupt_flag = false;
 
             /* Invert the USER LED state */
-            cyhal_gpio_toggle(CYBSP_USER_LED);
+            cyhal_gpio_toggle((cyhal_gpio_t) CYBSP_USER_LED);
         }
     }
 }
@@ -209,9 +214,9 @@ int main(void)
 *******************************************************************************/
  void timer_init(void)
  {
-    cy_rslt_t result;
+	cy_rslt_t result;
 
-    const cyhal_timer_cfg_t led_blink_timer_cfg = 
+    const cyhal_timer_cfg_t led_blink_timer_cfg = \
     {
         .compare_value = 0,                 /* Timer compare value, not used */
         .period = LED_BLINK_TIMER_PERIOD,   /* Defines the timer period */
@@ -221,9 +226,9 @@ int main(void)
         .value = 0                          /* Initial value of counter */
     };
 
-    /* Initialize the timer object. Does not use input pin ('pin' is NC) and
+    /* Initialize the timer object. Does not use pin output ('pin' is NC) and
      * does not use a pre-configured clock source ('clk' is NULL). */
-    result = cyhal_timer_init(&led_blink_timer, NC, NULL);
+    result = cyhal_timer_init(&led_blink_timer, (cyhal_gpio_t) NC, NULL);
 
     /* timer init failed. Stop program execution */
     if (result != CY_RSLT_SUCCESS)
@@ -242,8 +247,8 @@ int main(void)
     cyhal_timer_register_callback(&led_blink_timer, isr_timer, NULL);
 
     /* Set the event on which timer interrupt occurs and enable it */
-    cyhal_timer_enable_event(&led_blink_timer, CYHAL_TIMER_IRQ_TERMINAL_COUNT,
-                              7, true);
+    cyhal_timer_enable_event(&led_blink_timer, CYHAL_TIMER_IRQ_TERMINAL_COUNT \
+                               , 7, true);
 
     /* Start the timer with the configured settings */
     cyhal_timer_start(&led_blink_timer);
@@ -257,8 +262,8 @@ int main(void)
 * This is the interrupt handler function for the timer interrupt.
 *
 * Parameters:
-*    callback_arg    Arguments passed to the interrupt callback
-*    event            Timer/counter interrupt triggers
+* 	callback_arg	Arguments passed to the interrupt callback
+*	event			Timer/counter interrupt triggers
 *
 *******************************************************************************/
 static void isr_timer(void *callback_arg, cyhal_timer_event_t event)
@@ -266,7 +271,7 @@ static void isr_timer(void *callback_arg, cyhal_timer_event_t event)
     (void) callback_arg;
     (void) event;
 
-    /* Set the interrupt flag and process it from the main while(1) loop */
+	/* Set the interrupt flag and process it from the main while(1) loop */
     timer_interrupt_flag = true;
 }
 
