@@ -1,0 +1,1 @@
+mtb-example-psoc6-hello-world release-v2.2.0
